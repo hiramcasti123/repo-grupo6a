@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasarela de Pagos - Stripe</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .payment-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .payment-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .payment-header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .product-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .product-row:last-child {
+            margin-bottom: 0;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stripe-element {
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .stripe-element.focused {
+            border-color: #667eea;
+        }
+
+        .stripe-element.invalid {
+            border-color: #e74c3c;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .payment-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .payment-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .payment-button .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .security-info {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .security-icons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .security-badge {
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="payment-header">
+            <h1>💳 Pago Seguro</h1>
+            <p>Completa tu compra de forma segura</p>
+        </div>
+
+        <div class="product-info">
+            <div class="product-row">
+                <span>Producto Premium</span>
+                <span>$99.99</span>
+            </div>
+            <div class="product-row">
+                <span>Impuestos</span>
+                <span>$8.00</span>
+            </div>
+            <div class="product-row">
+                <span>Total</span>
+                <span>$107.99</span>
+            </div>
+        </div>
+
+        <div class="success-message" id="success-message">
+            ✅ ¡Pago procesado exitosamente! Recibirás un email de confirmación.
+        </div>
+
+        <form id="payment-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="tu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Nombre completo</label>
+                <input type="text" id="name" name="name" placeholder="Juan Pérez" required>
+            </div>
+
+            <div class="form-group">
+                <label for="card-element">Información de la tarjeta</label>
+                <div id="card-element" class="stripe-element">
+                    <!-- Stripe Elements se insertará aquí -->
+                </div>
+                <div id="card-errors" class="error-message"></div>
+            </div>
+
+            <button type="submit" id="submit-button" class="payment-button">
+                <span class="spinner" id="spinner"></span>
+                <span id="button-text">Pagar $107.99</span>
+            </button>
+        </form>
+
+        <div class="security-info">
+            <p>🔒 Pago 100% seguro y encriptado</p>
+            <div class="security-icons">
+                <span class="security-badge">SSL</span>
+                <span class="security-badge">256-BIT</span>
+                <span class="security-badge">PCI DSS</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IMPORTANTE: Reemplaza con tu clave pública de Stripe
+        const stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Clave de prueba - reemplazar con la real
+        const elements = stripe.elements();
+
+        // Crear el elemento de tarjeta con estilos personalizados
+        const cardElement = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                        color: '#aab7c4',
+                    },
+                    fontFamily: 'Arial, sans-serif',
+                },
+                invalid: {
+                    color: '#9e2146',
+                },
+            },
+            hidePostalCode: true
+        });
+
+        // Montar el elemento en el DOM
+        cardElement.mount('#card-element');
+
+        // Manejar cambios en tiempo real
+        cardElement.on('change', function(event) {
+            const displayError = document.getElementById('card-errors');
+            const cardElementContainer = document.getElementById('card-element');
+            
+            if (event.error) {
+                displayError.textContent = event.error.message;
+                displayError.style.display = 'block';
+                cardElementContainer.classList.add('invalid');
+            } else {
+                displayError.style.display = 'none';
+                cardElementContainer.classList.remove('invalid');
+            }
+
+            // Agregar clase focused
+            if (event.focused) {
+                cardElementContainer.classList.add('focused');
+            } else {
+                cardElementContainer.classList.remove('focused');
+            }
+        });
+
+        // Manejar el envío del formulario
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+        const spinner = document.getElementById('spinner');
+        const buttonText = document.getElementById('button-text');
+        const successMessage = document.getElementById('success-message');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            // Deshabilitar el botón y mostrar spinner
+            submitButton.disabled = true;
+            spinner.style.display = 'inline-block';
+            buttonText.textContent = 'Procesando...';
+
+            // Obtener datos del formulario
+            const email = document.getElementById('email').value;
+            const name = document.getElementById('name').value;
+
+            try {
+                // Crear el método de pago
+                const {error, paymentMethod} = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                    billing_details: {
+                        name: name,
+                        email: email,
+                    },
+                });
+
+                if (error) {
+                    // Mostrar error
+                    const errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = error.message;
+                    errorElement.style.display = 'block';
+                } else {
+                    // Aquí normalmente enviarías el paymentMethod.id a tu servidor
+                    // Para este ejemplo, simularemos una respuesta exitosa
+                    console.log('Payment Method creado:', paymentMethod);
+                    
+                    // Simular procesamiento del pago
+                    await simulatePaymentProcessing(paymentMethod);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                const errorElement = document.getElementById('card-errors');
+                errorElement.textContent = 'Ocurrió un error inesperado. Intenta nuevamente.';
+                errorElement.style.display = 'block';
+            }
+
+            // Rehabilitar el botón
+            submitButton.disabled = false;
+            spinner.style.display = 'none';
+            buttonText.textContent = 'Pagar $107.99';
+        });
+
+        // Función para simular el procesamiento del pago
+        async function simulatePaymentProcessing(paymentMethod) {
+            // En un caso real, aquí enviarías los datos a tu servidor
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Simular respuesta exitosa
+                    showSuccessMessage();
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        function showSuccessMessage() {
+            form.style.display = 'none';
+            successMessage.style.display = 'block';
+            
+            // Opcional: redirigir después de unos segundos
+            setTimeout(() => {
+                // window.location.href = '/thank-you';
+                console.log('Redirigir a página de agradecimiento');
+            }, 3000);
+        }
+
+        // IMPORTANTE: Integración con el backend
+        // Para un entorno de producción, necesitarás:
+        
+        /*
+        async function processPayment(paymentMethodId) {
+            const response = await fetch('/create-payment-intent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    payment_method_id: paymentMethodId,
+                    amount: 10799, // Cantidad en centavos
+                    currency: 'usd',
+                    customer_email: document.getElementById('email').value,
+                    customer_name: document.getElementById('name').value,
+                }),
+            });
+
+            const result = await response.json();
+            
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            if (result.requires_action) {
+                // Manejar autenticación 3D Secure
+                const {error: confirmError} = await stripe.confirmCardPayment(
+                    result.client_secret
+                );
+                
+                if (confirmError) {
+                    throw new Error(confirmError.message);
+                }
+            }
+
+            return result;
+        }
+        */
+    </script>
+</body>
+</html>
