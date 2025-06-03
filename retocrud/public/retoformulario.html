@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Automóviles</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 40px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="color"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .botones {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .botones button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .botones button:hover {
+      background-color: #2980b9;
+    }
+
+    #resultadoContainer {
+      margin-top: 40px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #ecf0f1;
+      color: #2c3e50;
+    }
+
+    .color-muestra {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 5px;
+      border: 1px solid #aaa;
+    }
+
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 30px;
+      text-decoration: none;
+      color: #2980b9;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gestión de Automóviles</h1>
+
+  <form id="crudForm">
+    <label for="id">ID:</label>
+    <input type="text" name="id" id="id" required>
+    
+    <label for="marca">Marca:</label>
+    <input type="text" name="marca" id="marca">
+
+    <label for="modelo">Modelo:</label>
+    <input type="text" name="modelo" id="modelo">
+    
+    <label for="placa">Placa:</label>
+    <input type="text" name="placa" id="placa">
+    
+    <label for="color">Color:</label>
+    <input type="color" name="color" id="color">
+    
+    <label for="anio">Año:</label>
+    <input type="number" name="anio" id="anio" min="1900" max="2025">
+
+    <div class="botones">
+      <button type="button" id="insertarBtn">Insertar</button>
+      <button type="button" id="actualizarBtn">Actualizar</button>
+      <button type="button" id="recuperarBtn">Recuperar</button>
+      <button type="button" id="eliminarBtn">Eliminar</button>
+    </div>
+  </form>
+
+  <div id="resultadoContainer"></div>
+
+  <a href="/home">Volver al Menú Principal</a>
+
+  <!-- Aquí va tu script JS tal como lo tienes -->
+  <script>
+    // ... tu código JavaScript permanece igual (no se repite aquí para brevedad) ...
+  </script>
+</body>
+</html>

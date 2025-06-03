@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Principal - Vehículos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .menu {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .color-muestra {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestión de Vehículos</h1>
+
+    <div class="menu">
+        <a href="/formulario-insertar.html"><button>Insertar</button></a>
+        <a href="/formulario-actualizar.html"><button>Actualizar</button></a>
+        <button id="recuperarBtn">Recuperar</button>
+        <a href="/formulario-eliminar.html"><button>Eliminar</button></a>
+        <a href="/gestor.html"><button>Gestor Completo</button></a>
+    </div>
+
+    <div id="resultadoContainer"></div>
+
+    <script>
+        document.getElementById('recuperarBtn').addEventListener('click', function() {
+            document.getElementById('resultadoContainer').innerHTML = '<p>Cargando datos...</p>';
+
+            fetch('/recuperar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                return response.json();
+            })
+            .then(data => {
+                if (data.length === 0) {
+                    document.getElementById('resultadoContainer').innerHTML =
+                        '<p>No hay vehículos registrados en la base de datos.</p>';
+                    return;
+                }
+
+                let tableHTML = '<h2>Vehículos Registrados</h2><table>';
+                tableHTML += '<tr><th>ID</th><th>Marca</th><th>Modelo</th><th>Placa</th><th>Color</th><th>Año</th><th>Acciones</th></tr>';
+
+                data.forEach(auto => {
+                    tableHTML += `
+                        <tr>
+                            <td>${auto.id || ''}</td>
+                            <td>${auto.marca || ''}</td>
+                            <td>${auto.modelo || ''}</td>
+                            <td>${auto.placa || ''}</td>
+                            <td><span class="color-muestra" style="background-color:${auto.color || '#000000'}"></span> ${auto.color || ''}</td>
+                            <td>${auto.anio || ''}</td>
+                            <td>
+                                <a href="/formulario-actualizar.html?id=${auto.id}"><button>Editar</button></a>
+                                <button onclick="eliminarAuto('${auto.id}')">Eliminar</button>
+                            </td>
+                        </tr>`;
+                });
+
+                tableHTML += '</table>';
+                document.getElementById('resultadoContainer').innerHTML = tableHTML;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('resultadoContainer').innerHTML =
+                    '<p>Error al recuperar los datos: ' + error.message + '</p>';
+            });
+        });
+
+        function eliminarAuto(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este vehículo?')) {
+                fetch('/eliminar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.text();
+                })
+                .then(data => {
+                    document.getElementById('recuperarBtn').click();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el vehículo: ' + error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

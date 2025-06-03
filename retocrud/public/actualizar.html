@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Vehículo</title>
+</head>
+<body>
+    <h2>Cambiar el Color de un Vehículo</h2>
+
+    <form id="formularioCambio">
+        <div>
+            <label for="vehiculoId">Identificador:</label>
+            <input type="text" id="vehiculoId" name="vehiculoId" required>
+        </div>
+        <div>
+            <label for="nuevoColor">Seleccionar Color:</label>
+            <input type="color" id="nuevoColor" name="nuevoColor" required>
+        </div>
+        <button type="submit">Guardar Cambios</button>
+    </form>
+
+    <p><a href="/home.html">← Regresar al Inicio</a></p>
+
+    <script>
+        // Detectar ID en la URL (opcional para precargar)
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const vehiculoId = params.get('id');
+            if (vehiculoId) {
+                document.getElementById('vehiculoId').value = vehiculoId;
+            }
+        });
+
+        // Enviar la solicitud de actualización
+        document.getElementById('formularioCambio').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const infoActualizada = {
+                id: document.getElementById('vehiculoId').value,
+                color: document.getElementById('nuevoColor').value
+            };
+
+            try {
+                const respuesta = await fetch('/actualizar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(infoActualizada)
+                });
+
+                if (!respuesta.ok) throw new Error('Error en la solicitud al servidor');
+
+                const contenido = await respuesta.text();
+                document.write(contenido); // Mostrar la respuesta HTML del backend
+            } catch (error) {
+                console.error('Error:', error);
+                alert('No se pudo actualizar el vehículo: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

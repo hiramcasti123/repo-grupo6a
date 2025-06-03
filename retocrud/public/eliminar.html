@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Vehículo</title>
+</head>
+<body>
+    <h2>Eliminar Registro de Vehículo</h2>
+
+    <form id="formularioEliminacion">
+        <p style="color: red;">⚠️ Atención: Esta operación no se puede revertir.</p>
+        
+        <label for="vehiculoId">ID del Vehículo:</label>
+        <input type="text" id="vehiculoId" name="vehiculoId" required>
+
+        <button type="submit">Eliminar</button>
+    </form>
+
+    <p><a href="/home.html">← Volver al Inicio</a></p>
+
+    <script>
+        // Precargar ID desde la URL si está presente
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (id) {
+                document.getElementById('vehiculoId').value = id;
+            }
+        });
+
+        // Manejar la solicitud de eliminación
+        document.getElementById('formularioEliminacion').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const confirmar = confirm('¿Seguro que deseas eliminar este vehículo? Esta acción no se puede deshacer.');
+            if (!confirmar) return;
+
+            const datos = {
+                id: document.getElementById('vehiculoId').value
+            };
+
+            try {
+                const respuesta = await fetch('/eliminar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                if (!respuesta.ok) throw new Error('Fallo la comunicación con el servidor');
+
+                const resultado = await respuesta.text();
+                document.write(resultado); // Mostrar respuesta HTML del backend
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+                alert('Hubo un problema al intentar eliminar el vehículo: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
