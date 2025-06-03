@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Canciones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-editar {
+            background-color: #28a745;
+        }
+
+        .btn-editar:hover {
+            background-color: #218838;
+        }
+
+        /* Estilos mejorados para el formulario */
+        #formCancion {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: left;
+            z-index: 1000;
+        }
+
+        #formCancion label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        #formCancion input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #formCancion button {
+            width: 100%;
+            background-color: #007BFF;
+        }
+        
+        /* Fondo oscuro cuando el formulario está activo */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+<h1>Gestión de Canciones</h1>
+
+<!-- Menú de opciones -->
+<div>
+    <button id="insertarCancion">Insertar Nueva Canción</button>
+    <button id="eliminarCancion">Eliminar Canción</button>
+</div>
+
+<!-- Tabla de canciones -->
+<table id="tabla-canciones">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Canción</th>
+        <th>Artista</th>
+        <th>Duración</th>
+        <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Las filas se agregarán dinámicamente aquí -->
+    </tbody>
+</table>
+
+<!-- Overlay para oscurecer el fondo -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Formulario mejorado -->
+<form id="formCancion">
+    <h3 id="formTitulo"></h3>
+    <label for="cancion">Canción:</label>
+    <input type="text" name="cancion" id="cancion" required>
+    <label for="artista">Artista:</label>
+    <input type="text" name="artista" id="artista" required>
+    <label for="duracion">Duración:</label>
+    <input type="text" name="duracion" id="duracion" required>
+    <button type="button" id="guardarCancion">Guardar</button>
+    <button type="button" id="cancelarForm" style="background-color: #dc3545; margin-top: 10px;">Cancelar</button>
+</form>
+
+<script>
+    const API_URL = 'http://localhost:3000/canciones';
+    const tablaBody = document.querySelector('#tabla-canciones tbody');
+    const formCancion = document.getElementById('formCancion');
+    const overlay = document.getElementById('overlay');
+    const formTitulo = document.getElementById('formTitulo');
+    const inputCancion = document.getElementById('cancion');
+    const inputArtista = document.getElementById('artista');
+    const inputDuracion = document.getElementById('duracion');
+    let editandoId = null;
+
+    // Función para cargar canciones desde el servidor
+    function cargarCanciones() {
+        fetch(API_URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                tablaBody.innerHTML = '';
+                data.forEach(cancion => {
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${cancion._id}</td>
+                        <td>${cancion.cancion}</td>
+                        <td>${cancion.artista}</td>
+                        <td>${cancion.duracion}</td>
+                        <td>
+                            <button class="btn-editar" onclick="mostrarFormularioEditar('${cancion._id}', '${cancion.cancion}', '${cancion.artista}', '${cancion.duracion}')">Editar</button>
+                        </td>
+                    `;
+                    tablaBody.appendChild(fila);
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar los datos:', error);
+                alert('Error al cargar las canciones: ' + error.message);
+            });
+    }
+
+    // Función para mostrar el formulario de edición
+    function mostrarFormularioEditar(id, cancion, artista, duracion) {
+        formTitulo.textContent = 'Editar Canción';
+        inputCancion.value = cancion;
+        inputArtista.value = artista;
+        inputDuracion.value = duracion;
+        formCancion.style.display = 'block';
+        overlay.style.display = 'block';
+        editandoId = id;
+    }
+
+    // Función para mostrar el formulario de inserción
+    function mostrarFormulario(titulo, cancion = {}) {
+        formTitulo.textContent = titulo;
+        inputCancion.value = cancion.cancion || '';
+        inputArtista.value = cancion.artista || '';
+        inputDuracion.value = cancion.duracion || '';
+        formCancion.style.display = 'block';
+        overlay.style.display = 'block';
+        editandoId = cancion._id || null;
+    }
+
+    // Evento para el botón de insertar canción
+    document.getElementById('insertarCancion').addEventListener('click', () => {
+        mostrarFormulario('Insertar Nueva Canción');
+    });
+    
+    // Evento para el botón de cancelar
+    document.getElementById('cancelarForm').addEventListener('click', () => {
+        formCancion.style.display = 'none';
+        overlay.style.display = 'none';
+    });
+
+    // Evento para el botón de guardar canción
+    document.getElementById('guardarCancion').addEventListener('click', () => {
+        const nuevaCancion = {
+            cancion: inputCancion.value,
+            artista: inputArtista.value,
+            duracion: inputDuracion.value
+        };
+
+        if (editandoId) {
+            // Actualizar canción existente
+            fetch(`${API_URL}/${editandoId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(nuevaCancion)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al actualizar: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    cargarCanciones();
+                    formCancion.style.display = 'none';
+                    overlay.style.display = 'none';
+                    alert('Canción actualizada correctamente');
+                })
+                .catch(error => {
+                    console.error('Error al editar la canción:', error);
+                    alert('Error al actualizar la canción: ' + error.message);
+                });
+        } else {
+            // Insertar nueva canción
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(nuevaCancion)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al insertar: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    cargarCanciones();
+                    formCancion.style.display = 'none';
+                    overlay.style.display = 'none';
+                    alert('Canción agregada correctamente');
+                })
+                .catch(error => {
+                    console.error('Error al insertar la canción:', error);
+                    alert('Error al insertar la canción: ' + error.message);
+                });
+        }
+    });
+
+    // Evento para eliminar una canción
+    document.getElementById('eliminarCancion').addEventListener('click', () => {
+        const id = prompt('Ingresa el ID de la canción a eliminar:');
+        if (id) {
+            fetch(`${API_URL}/${id}`, { 
+                method: 'DELETE' 
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al eliminar: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    cargarCanciones();
+                    alert('Canción eliminada correctamente');
+                })
+                .catch(error => {
+                    console.error('Error al eliminar la canción:', error);
+                    alert('Error al eliminar la canción: ' + error.message);
+                });
+        }
+    });
+
+    // Función global para editar - necesaria para el onclick en la tabla
+    window.mostrarFormularioEditar = mostrarFormularioEditar;
+
+    // Cargar las canciones al iniciar la página
+    cargarCanciones();
+</script>
+</body>
+</html>
